@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>Liga Sukan: Malaysia Edition</title>
+ <style>
+ body {
+ margin: 0;
+ padding: 0;
+ background-color: #1a252f;
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ height: 100vh;
+ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+ color: white;
+ overflow: hidden; /* Prevent scrolling */
+ touch-action: none; /* Disable browser zooming/swiping */
+ }
+
+ /* Club Selection Screen */
+ #club-screen {
+ position: absolute;
+ top: 0; left: 0; width: 100%; height: 100%;
+ background: rgba(0,0,0,0.9);
+ z-index: 10;
+ display: flex;
+ flex-direction: column;
+ align-items: center;
+ justify-content: center;
+ }
+
+ .club-grid {
+ display: grid;
+ grid-template-columns: repeat(3, 1fr);
+ gap: 15px;
+ margin-top: 20px;
+ max-width: 600px;
+ }
+
+ .club-card {
+ background: #34495e;
+ padding: 15px;
+ border-radius: 10px;
+ cursor: pointer;
+ text-align: center;
+ transition: transform 0.2s, background 0.2s;
+ border: 2px solid transparent;
+ }
+
+ .club-card:hover, .club-card:active {
+ transform: scale(1.05);
+ background: #2c3e50;
+ border-color: #fff;
+ }
+
+ .club-icon {
+ width: 50px;
+ height: 50px;
+ border-radius: 50%;
+ margin: 0 auto 10px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-weight: bold;
+ font-size: 18px;
+ color: white;
+ }
+
+ #game-container {
+ position: relative;
+ box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+ border: 5px solid #fff;
+ border-radius: 4px;
+ width: 800px;
+ max-width: 100%;
+ aspect-ratio: 8/5;
+ }
+
+ canvas {
+ display: block;
+ width: 100%;
+ height: 100%;
+ background-color: #27ae60; 
+ cursor: none;
+ }
+
+ #ui-layer {
+ position: absolute;
+ top: 10px;
+ width: 100%;
+ text-align: center;
+ pointer-events: none;
+ text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+ z-index: 5;
+ }
+
+ .score-board {
+ font-size: 24px;
+ font-weight: bold;
+ letter-spacing: 2px;
+ background: rgba(0,0,0,0.5);
+ padding: 5px 15px;
+ border-radius: 20px;
+ display: inline-block;
+ }
+
+ #commentator-box {
+ position: absolute;
+ bottom: 80px; /* Moved up slightly to avoid controls */
+ left: 50%;
+ transform: translateX(-50%);
+ background: rgba(0, 0, 0, 0.85);
+ color: #f1c40f;
+ padding: 8px 20px;
+ border-radius: 30px;
+ font-size: 16px;
+ font-weight: bold;
+ border: 2px solid #f1c40f;
+ min-width: 200px;
+ text-align: center;
+ opacity: 0;
+ transition: opacity 0.3s;
+ pointer-events: none;
+ z-index: 5;
+ }
+
+ #message {
+ position: absolute;
+ top: 50%;
+ left: 50%;
+ transform: translate(-50%, -50%);
+ font-size: 32px;
+ background: rgba(0, 0, 0, 0.9);
+ padding: 20px 40px;
+ border-radius: 10px;
+ display: none;
+ text-align: center;
+ z-index: 6;
+ border: 3px solid white;
+ }
+
+ /* Touch Controls */
+ #controls {
+ position: absolute;
+ bottom: 20px;
+ width: 100%;
+ height: 120px;
+ pointer-events: none; /* Let clicks pass through empty areas */
+ display: flex;
+ justify-content: space-between;
+ padding: 0 40px;
+ box-sizing: border-box;
+ z-index: 8;
+ }
+
+ .control-zone {
+ pointer-events: auto;
+ position: relative;
+ }
+
+ /* Joystick Base */
+ #joystick-base {
+ width: 100px;
+ height: 100px;
+ background: rgba(255, 255, 255, 0.1);
+ border: 2px solid rgba(255, 255, 255, 0.3);
+ border-radius: 50%;
+ position: relative;
+ }
+
+ /* Joystick Stick */
+ #joystick-stick {
+ width: 40px;
+ height: 40px;
+ background: rgba(255, 255, 255, 0.8);
+ border-radius: 50%;
+ position: absolute;
+ top: 50%;
+ left: 50%;
+ transform: translate(-50%, -50%);
+ box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+ }
+
+ /* Shoot Button */
+ #shoot-btn {
+ width: 80px;
+ height: 80px;
+ background: rgba(231, 76, 60, 0.6);
+ border: 2px solid rgba(255, 255, 255, 0.5);
+ border-radius: 50%;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-weight: bold;
+ font-size: 14px;
+ color: white;
+ user-select: none;
+ }
+
+ #shoot-btn:active {
+ background: rgba(231, 76, 60, 0.9);
+ transform: scale(0.95);
+ }
+
+ .controls-hint {
+ margin-top: 10px;
+ font-size: 12px;
+ opacity: 0.6;
+ text-align: center;
+ }
+ 
+ kbd {
+ background: #eee;
+ border-radius: 3px;
+ border: 1px solid #b4b4b4;
+ color: #333;
+ display: inline-block;
+ font-size: .8em;
+ font-weight: 700;
+ padding: 2px 4px;
+ }
+ </style>
+</head>
+<body>
+
+ <!-- Club Selection Screen -->
+ <div id="club-screen">
+ <h1>PILIH KELAB ANDA</h1>
+ <p>Liga Malaysia Super</p>
+ <div class="club-grid" id="club-grid">
+ <!-- Clubs injected via JS -->
+ </div>
+ </div>
+
+ <div id="game-container">
+ <canvas id="gameCanvas"></canvas>
+ 
+ <div id="ui-layer">
+ <div class="score-board">
+ <span id="teamP1-name" style="color: #3498db">PASUKAN A</span>: <span id="scoreP1">0</span> 
+ - 
+ <span id="teamCPU-name" style="color: #e74c3c">PASUKAN B</span>: <span id="scoreCPU">0</span>
+ </div>
+ </div>
+
+ <div id="commentator-box">Selamat datang ke perlawanan!</div>
+
+ <div id="message">
+ GOAL!<br>
+ <span style="font-size: 18px; font-weight: normal;">Tekan SPACE / Sentuh Layar untuk ulang</span>
+ </div>
+
+ <!-- Touch Controls Overlay -->
+ <div id="controls">
+ <div class="control-zone" id="zone-joystick">
+ <div id="joystick-base">
+ <div id="joystick-stick"></div>
+ </div>
+ </div>
+ <div class="control-zone" id="zone-shoot">
+ <div id="shoot-btn">TENDANG<br>(SHOOT)</div>
+ </div>
+ </div>
+ </div>
+
+ <div class="controls-hint">
+ PC: <kbd>WASD</kbd> Gerak | <kbd>Space</kbd> Tendang <br>
+ Mobile: Gunakan butang di skrin
+ </div>
+
+<script>
+ // --- DATA: LIGA MALAYSIA CLUBS ---
+ const clubs = \[
+ { name: "Johor Darul Ta'zim", short: "JDT", color: "#8B0000", accent: "#FFD700" },
+ { name: "Kedah Darul Aman", short: "KDA", color: "#000000", accent: "#FFFF00" },
+ { name: "Selangor FC", short: "SLC", color: "#0000CD", accent: "#FFFFFF" },
+ { name: "Terengganu FC", short: "TFC", color: "#008000", accent: "#FFFFFF" },
+ { name: "Melaka United", short: "MLK", color: "#FF4500", accent: "#000000" },
+ { name: "Sabah FC", short: "SBH", color: "#00CED1", accent: "#FFFFFF" }
+ \];
+
+ let selectedClub = null;
+ let opponentClub = null;
+
+ // --- COMMENTATOR PHRASES (Bahasa Melayu) ---
+ const phrases = {
+ start: \["Perlawanan bermula!", "Siap sedia...", "Wasit meniup wisel!"\],
+ goalPlayer: \["GOL!!! Jaringan yang hebat!", "Mantap! Pasukan kita unggul!", "Gol yang cantik!"\],
+ goalCPU: \["Gol untuk lawan!", "Penjaga gol tidak dapat menahan...", "Lawan menjaringkan gol."\],
+ kick: \["Tendangan kuat!", "Peluang emas!", "Berani mencuba!"\]
+ };
+
+ function getRandomPhrase(category) {
+ const list = phrases\[category\];
+ return list\[Math.floor(Math.random() * list.length)\];
+ }
+
+ function showCommentary(text) {
+ const box = document.getElementById('commentator-box');
+ box.innerText = text;
+ box.style.opacity = 1;
+ setTimeout(() => {
+ box.style.opacity = 0;
+ }, 3000);
+ }
+
+ // --- SETUP CLUB SELECTION ---
+ const clubGrid = document.getElementById('club-grid');
+ 
+ clubs.forEach((club) => {
+ const card = document.createElement('div');
+ card.className = 'club-card';
+ card.innerHTML = `
+ <div class="club-icon" style="background:${club.color}; color:${club.accent}">${club.short}</div>
+ <div>${club.name}</div>
+ `;
+ card.onclick = () => selectClub(club);
+ clubGrid.appendChild(card);
+ });
+
+ function selectClub(clubData) {
+ selectedClub = clubData;
+ // Pick random opponent different from player
+ let oppIndex;
+ do {
+ oppIndex = Math.floor(Math.random() * clubs.length);
+ } while (clubs\[oppIndex\] === selectedClub);
+ opponentClub = clubs\[oppIndex\];
+
+ // Update UI Text
+ document.getElementById('teamP1-name').innerText = selectedClub.short;
+ document.getElementById('teamP1-name').style.color = selectedClub.accent;
+ document.getElementById('teamCPU-name').innerText = opponentClub.short;
+ document.getElementById('teamCPU-name').style.color = opponentClub.accent;
+
+ // Hide selection screen
+ document.getElementById('club-screen').style.display = 'none';
+ 
+ // Start Game
+ resetPositions();
+ showCommentary("Selamat datang ke perlawanan!");
+ loop();
+ }
+
+ // --- GAME ENGINE ---
+ const canvas = document.getElementById('gameCanvas');
+ const ctx = canvas.getContext('2d');
+ const scoreP1El = document.getElementById('scoreP1');
+ const scoreCPUEl = document.getElementById('scoreCPU');
+ const msgEl = document.getElementById('message');
+
+ // Canvas sizing
+ function resizeCanvas() {
+ const container = document.getElementById('game-container');
+ canvas.width = container.clientWidth;
+ canvas.height = container.clientHeight;
+ }
+ window.addEventListener('resize', resizeCanvas);
+ resizeCanvas();
+
+ // Game Constants
+ const FRICTION = 0.98;
+ const PLAYER_SPEED = 0.6;
+ 
+ // Game State
+ let scores = { p1: 0, cpu: 0 };
+ let isGameOver = false;
+
+ // Input Handling
+ const keys = {};
+ window.addEventListener('keydown', (e) => keys\[e.code\] = true);
+ window.addEventListener('keyup', (e) => keys\[e.code\] = false);
+
+ // Touch Input State
+ const touchInput = {
+ active: false,
+ dx: 0,
+ dy: 0,
+ shooting: false
+ };
+
+ // Joystick Logic
+ const joystickBase = document.getElementById('joystick-base');
+ const joystickStick = document.getElementById('joystick-stick');
+ const zoneJoystick = document.getElementById('zone-joystick');
+ const shootBtn = document.getElementById('shoot-btn');
+ const zoneShoot = document.getElementById('zone-shoot');
+
+ let joystickCenter = { x: 0, y: 0 };
+ const maxRadius = 30; // Max stick movement radius
+
+ function handleJoystickStart(e) {
+ e.preventDefault();
+ const rect = joystickBase.getBoundingClientRect();
+ joystickCenter = {
+ x: rect.left + rect.width / 2,
+ y: rect.top + rect.height / 2
+ };
+ touchInput.active = true;
+ updateJoystickPosition(e.touches ? e.touches\[0\] : e);
+ }
+
+ function handleJoystickMove(e) {
+ if (!touchInput.active) return;
+ e.preventDefault();
+ updateJoystickPosition(e.touches ? e.touches\[0\] : e);
+ }
+
+ function handleJoystickEnd(e) {
+ e.preventDefault();
+ touchInput.active = false;
+ touchInput.dx = 0;
+ touchInput.dy = 0;
+ joystickStick.style.transform = `translate(-50%, -50%)`;
+ }
+
+ function updateJoystickPosition(touch) {
+ const dx = touch.clientX - joystickCenter.x;
+ const dy = touch.clientY - joystickCenter.y;
+ const distance = Math.sqrt(dx*dx + dy*dy);
+ 
+ // Clamp distance
+ const clampedDist = Math.min(distance, maxRadius);
+ const angle = Math.atan2(dy, dx);
+ 
+ const moveX = Math.cos(angle) * clampedDist;
+ const moveY = Math.sin(angle) * clampedDist;
+
+ // Visual update
+ joystickStick.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+
+ // Normalize output (-1 to 1)
+ touchInput.dx = moveX / maxRadius;
+ touchInput.dy = moveY / maxRadius;
+ }
+
+ // Event Listeners for Joystick
+ zoneJoystick.addEventListener('mousedown', handleJoystickStart);
+ window.addEventListener('mousemove', handleJoystickMove);
+ window.addEventListener('mouseup', handleJoystickEnd);
+ 
+ zoneJoystick.addEventListener('touchstart', handleJoystickStart, {passive: false});
+ window.addEventListener('touchmove', handleJoystickMove, {passive: false});
+ window.addEventListener('touchend', handleJoystickEnd);
+
+ // Event Listeners for Shoot Button
+ function startShoot(e) {
+ e.preventDefault();
+ touchInput.shooting = true;
+ shootBtn.style.background = "rgba(231, 76, 60, 0.9)";
+ }
+ function endShoot(e) {
+ e.preventDefault();
+ touchInput.shooting = false;
+ shootBtn.style.background = "rgba(231, 76, 60, 0.6)";
+ }
+
+ shootBtn.addEventListener('mousedown', startShoot);
+ shootBtn.addEventListener('mouseup', endShoot);
+ shootBtn.addEventListener('mouseleave', endShoot);
+ 
+ shootBtn.addEventListener('touchstart', startShoot, {passive: false});
+ shootBtn.addEventListener('touchend', endShoot);
+
+
+ // Entities
+ const ball = {
+ x: canvas.width / 2,
+ y: canvas.height / 2,
+ radius: 10,
+ vx: 0,
+ vy: 0,
+ color: '#fff'
+ };
+
+ const player = {
+ x: 100,
+ y: canvas.height / 2,
+ radius: 20,
+ vx: 0,
+ vy: 0,
+ speed: PLAYER_SPEED
+ };
+
+ const cpu = {
+ x: canvas.width - 100,
+ y: canvas.height / 2,
+ radius: 20,
+ vx: 0,
+ vy: 0,
+ speed: 0.4
+ };
+
+ const goals = {
+ width: 10,
+ height: 140,
+ y: (canvas.height / 2) - 70
+ };
+
+ function resetPositions() {
+ ball.x = canvas.width / 2;
+ ball.y = canvas.height / 2;
+ ball.vx = 0;
+ ball.vy = 0;
+
+ player.x = 100;
+ player.y = canvas.height / 2;
+ player.vx = 0;
+ player.vy = 0;
+
+ cpu.x = canvas.width - 100;
+ cpu.y = canvas.height / 2;
+ cpu.vx = 0;
+ cpu.vy = 0;
+ }
+
+ function updatePhysics(entity) {
+ entity.x += entity.vx;
+ entity.y += entity.vy;
+
+ // Wall collisions
+ if (entity.x - entity.radius < 0) {
+ entity.x = entity.radius;
+ entity.vx *= -0.8;
+ }
+ if (entity.x + entity.radius > canvas.width) {
+ entity.x = canvas.width - entity.radius;
+ entity.vx *= -0.8;
+ }
+ if (entity.y - entity.radius < 0) {
+ entity.y = entity.radius;
+ entity.vy *= -0.8;
+ }
+ if (entity.y + entity.radius > canvas.height) {
+ entity.y = canvas.height - entity.radius;
+ entity.vy *= -0.8;
+ }
+ }
+
+ function checkCollision(p, b) {
+ const dx = b.x - p.x;
+ const dy = b.y - p.y;
+ const distance = Math.sqrt(dx * dx + dy * dy);
+
+ if (distance < p.radius + b.radius) {
+ const angle = Math.atan2(dy, dx);
+ const force = 1.5; 
+ 
+ b.vx += Math.cos(angle) * force + (p.vx * 0.5);
+ b.vy += Math.sin(angle) * force + (p.vy * 0.5);
+
+ const overlap = (p.radius + b.radius) - distance;
+ b.x += Math.cos(angle) * overlap;
+ b.y += Math.sin(angle) * overlap;
+ }
+ }
+
+ function updateAI() {
+ const dx = ball.x - cpu.x;
+ const dy = ball.y - cpu.y;
+ const dist = Math.sqrt(dx*dx + dy*dy);
+
+ if (dist > 5) {
+ cpu.vx += (dx / dist) * cpu.speed;
+ cpu.vy += (dy / dist) * cpu.speed;
+ }
+
+ const currentSpeed = Math.sqrt(cpu.vx*cpu.vx + cpu.vy*cpu.vy);
+ if (currentSpeed > 4.5) {
+ cpu.vx = (cpu.vx / currentSpeed) * 4.5;
+ cpu.vy = (cpu.vy / currentSpeed) * 4.5;
+ }
+ }
+
+ function handleInput() {
+ // Keyboard Input
+ if (keys\['ArrowUp'\] || keys\['KeyW'\]) player.vy -= player.speed;
+ if (keys\['ArrowDown'\] || keys\['KeyS'\]) player.vy += player.speed;
+ if (keys\['ArrowLeft'\] || keys\['KeyA'\]) player.vx -= player.speed;
+ if (keys\['ArrowRight'\] || keys\['KeyD'\]) player.vx += player.speed;
+
+ // Touch Input (Joystick)
+ if (touchInput.active) {
+ player.vx += touchInput.dx * player.speed;
+ player.vy += touchInput.dy * player.speed;
+ }
+
+ // Shooting / Boost
+ if (keys\['Space'\] || touchInput.shooting) {
+ player.vx *= 1.15; // Boost
+ player.vy *= 1.15;
+ }
+ }
+
+ function update() {
+ if (isGameOver) {
+ if (keys\['Space'\] || touchInput.shooting) {
+ isGameOver = false;
+ msgEl.style.display = 'none';
+ resetPositions();
+ }
+ return;
+ }
+
+ handleInput();
+ updateAI();
+
+ ball.vx *= FRICTION;
+ ball.vy *= FRICTION;
+
+ if (Math.abs(ball.vx) < 0.05) ball.vx = 0;
+ if (Math.abs(ball.vy) < 0.05) ball.vy = 0;
+
+ updatePhysics(player);
+ updatePhysics(cpu);
+ updatePhysics(ball);
+
+ checkCollision(player, ball);
+ checkCollision(cpu, ball);
+
+ // Goal Detection
+ if (ball.x < 10 && ball.y > goals.y && ball.y < goals.y + goals.height) {
+ scores.p1++;
+ scoreP1El.innerText = scores.p1;
+ triggerGoal(true);
+ }
+ else if (ball.x > canvas.width - 10 && ball.y > goals.y && ball.y < goals.y + goals.height) {
+ scores.cpu++;
+ scoreCPUEl.innerText = scores.cpu;
+ triggerGoal(false);
+ }
+ }
+
+ function triggerGoal(isPlayerGoal) {
+ isGameOver = true;
+ if (isPlayerGoal) {
+ msgEl.innerHTML = `GOAL UNTUK ${selectedClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
+ showCommentary(getRandomPhrase('goalPlayer'));
+ } else {
+ msgEl.innerHTML = `GOAL UNTUK ${opponentClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
+ showCommentary(getRandomPhrase('goalCPU'));
+ }
+ msgEl.style.display = 'block';
+ }
+
+ function drawPitch() {
+ ctx.fillStyle = '#27ae60';
+ ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+ ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+ ctx.lineWidth = 3;
+
+ ctx.beginPath();
+ ctx.moveTo(canvas.width / 2, 0);
+ ctx.lineTo(canvas.width / 2, canvas.height);
+ ctx.stroke();
+
+ ctx.beginPath();
+ ctx.arc(canvas.width / 2, canvas.height / 2, 70, 0, Math.PI * 2);
+ ctx.stroke();
+
+ ctx.strokeRect(0, (canvas.height/2) - 100, 100, 200);
+ ctx.strokeRect(canvas.width - 100, (canvas.height/2) - 100, 100, 200);
+
+ ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+ ctx.fillRect(0, goals.y, 5, goals.height);
+ ctx.fillRect(canvas.width - 5, goals.y, 5, goals.height);
+ }
+
+ function drawEntity(entity) {
+ ctx.beginPath();
+ ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
+ 
+ // Use team colors if it's player or CPU
+ if (entity === player && selectedClub) {
+ ctx.fillStyle = selectedClub.color;
+ ctx.strokeStyle = selectedClub.accent;
+ } else if (entity === cpu && opponentClub) {
+ ctx.fillStyle = opponentClub.color;
+ ctx.strokeStyle = opponentClub.accent;
+ } else {
+ ctx.fillStyle = '#fff';
+ ctx.strokeStyle = '#ccc';
+ }
+ 
+ ctx.fill();
+ ctx.lineWidth = 2;
+ ctx.stroke();
+ ctx.closePath();
+
+ // Shine effect
+ ctx.beginPath();
+ ctx.arc(entity.x - 5, entity.y - 5, entity.radius / 3, 0, Math.PI * 2);
+ ctx.fillStyle = 'rgba(255,255,255,0.3)';
+ ctx.fill();
+ ctx.closePath();
+ }
+
+ function draw() {
+ drawPitch();
+ drawEntity(player);
+ drawEntity(cpu);
+ drawEntity(ball);
+ }
+
+ function loop() {
+ requestAnimationFrame(loop);
+ update();
+ draw();
+ }
+
+</script>
+</body>
+</html>
+
