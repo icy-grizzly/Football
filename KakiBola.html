@@ -16,8 +16,8 @@
  height: 100vh;
  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
  color: white;
- overflow: hidden; /* Prevent scrolling */
- touch-action: none; /* Disable browser zooming/swiping */
+ overflow: hidden;
+ touch-action: none;
  }
 
  /* Club Selection Screen */
@@ -355,7 +355,6 @@
  window.addEventListener('resize', resizeCanvas);
  resizeCanvas();
 
- // Game Constants
  const FRICTION = 0.95;
  const PLAYER_SPEED = 0.7;
  
@@ -381,7 +380,10 @@
 
  let joystickCenter = { x: 0, y: 0 };
  const maxRadius = 30;
+ let joystickTouchId = null;
+ let shootTouchId = null;
 
+ // --- ROBUST MULTI-TOUCH JOYSTICK HANDLERS ---
  function handleJoystickStart(e) {
  e.preventDefault();
  const rect = joystickBase.getBoundingClientRect();
@@ -389,21 +391,46 @@
  x: rect.left + rect.width / 2,
  y: rect.top + rect.height / 2
  };
+ 
+ const touch = e.changedTouches ? e.changedTouches[0] : e;
+ joystickTouchId = touch.identifier !== undefined ? touch.identifier : 'mouse';
  touchInput.active = true;
- updateJoystickPosition(e.touches ? e.touches[0] : e);
+ updateJoystickPosition(touch);
  }
 
  function handleJoystickMove(e) {
  if (!touchInput.active) return;
  e.preventDefault();
- updateJoystickPosition(e.touches ? e.touches[0] : e);
+ 
+ if (e.touches) {
+ for (let i = 0; i < e.touches.length; i++) {
+ if (e.touches[i].identifier === joystickTouchId) {
+ updateJoystickPosition(e.touches[i]);
+ break;
+ }
+ }
+ } else {
+ updateJoystickPosition(e);
+ }
  }
 
  function handleJoystickEnd(e) {
  e.preventDefault();
+ if (e.changedTouches) {
+ let ended = false;
+ for (let i = 0; i < e.changedTouches.length; i++) {
+ if (e.changedTouches[i].identifier === joystickTouchId) {
+ ended = true;
+ break;
+ }
+ }
+ if (!ended) return;
+ }
+ 
  touchInput.active = false;
  touchInput.dx = 0;
  touchInput.dy = 0;
+ joystickTouchId = null;
  joystickStick.style.transform = `translate(-50%, -50%)`;
  }
 
@@ -430,24 +457,43 @@
  
  zoneJoystick.addEventListener('touchstart', handleJoystickStart, {passive: false});
  window.addEventListener('touchmove', handleJoystickMove, {passive: false});
- window.addEventListener('touchend', handleJoystickEnd);
+ window.addEventListener('touchend', handleJoystickEnd, {passive: false});
+ window.addEventListener('touchcancel', handleJoystickEnd, {passive: false});
 
+ // --- ROBUST SHOOT BUTTON HANDLERS ---
  function startShoot(e) {
  e.preventDefault();
+ const touch = e.changedTouches ? e.changedTouches[0] : e;
+ shootTouchId = touch.identifier !== undefined ? touch.identifier : 'mouse';
  touchInput.shooting = true;
  shootBtn.style.background = "rgba(231, 76, 60, 0.9)";
  }
+
  function endShoot(e) {
  e.preventDefault();
+ if (e.changedTouches) {
+ let ended = false;
+ for (let i = 0; i < e.changedTouches.length; i++) {
+ if (e.changedTouches[i].identifier === shootTouchId) {
+ ended = true;
+ break;
+ }
+ }
+ if (!ended && shootTouchId !== null) return;
+ }
+ 
  touchInput.shooting = false;
+ shootTouchId = null;
  shootBtn.style.background = "rgba(231, 76, 60, 0.6)";
  }
 
  shootBtn.addEventListener('mousedown', startShoot);
  shootBtn.addEventListener('mouseup', endShoot);
  shootBtn.addEventListener('mouseleave', endShoot);
+ 
  shootBtn.addEventListener('touchstart', startShoot, {passive: false});
- shootBtn.addEventListener('touchend', endShoot);
+ shootBtn.addEventListener('touchend', endShoot, {passive: false});
+ shootBtn.addEventListener('touchcancel', endShoot, {passive: false});
 
  const ball = {
  x: canvas.width / 2,
@@ -634,10 +680,10 @@
  function triggerGoal(isPlayerGoal) {
  isGameOver = true;
  if (isPlayerGoal) {
- msgEl.innerHTML = `GOAL UNTUK ${selectedClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Tekan SPACE / Sentuh Layar untuk ulang</span>`;
+ msgEl.innerHTML = `GOAL UNTUK ${selectedClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
  showCommentary(getRandomPhrase('goalPlayer'));
  } else {
- msgEl.innerHTML = `GOAL UNTUK ${opponentClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Tekan SPACE / Sentuh Layar untuk ulang</span>`;
+ msgEl.innerHTML = `GOAL UNTUK ${opponentClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
  showCommentary(getRandomPhrase('goalCPU'));
  }
  msgEl.style.display = 'block';
