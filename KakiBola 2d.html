@@ -5,6 +5,12 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
  <title>Liga Sukan: Malaysia Edition</title>
  <style>
+ * {
+   box-sizing: border-box;
+   user-select: none;
+   -webkit-user-select: none;
+ }
+
  body {
  margin: 0;
  padding: 0;
@@ -17,65 +23,100 @@
  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
  color: white;
  overflow: hidden;
- touch-action: none;
  }
 
- /* Club Selection Screen */
- #club-screen {
- position: absolute;
+ /* Overlay Screens (Mode, Menu, Club Selection) */
+ .overlay-screen {
+ position: fixed;
  top: 0; left: 0; width: 100%; height: 100%;
- background: rgba(0,0,0,0.9);
- z-index: 10;
+ background: rgba(15, 23, 42, 0.95);
+ z-index: 999;
  display: flex;
  flex-direction: column;
  align-items: center;
  justify-content: center;
+ padding: 20px;
+ text-align: center;
+ }
+
+ .screen-title {
+ font-size: 28px;
+ margin-bottom: 20px;
+ text-transform: uppercase;
+ letter-spacing: 2px;
+ text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+ }
+
+ .menu-grid {
+ display: flex;
+ flex-direction: column;
+ gap: 15px;
+ width: 100%;
+ max-width: 320px;
+ }
+
+ .menu-btn {
+ background: #34495e;
+ border: 2px solid #5d6d7e;
+ color: white;
+ padding: 15px 20px;
+ font-size: 18px;
+ font-weight: bold;
+ border-radius: 10px;
+ cursor: pointer;
+ transition: all 0.2s;
+ }
+
+ .menu-btn:active, .menu-btn:hover {
+ background: #27ae60;
+ border-color: #2ecc71;
+ transform: scale(1.02);
  }
 
  .club-grid {
  display: grid;
  grid-template-columns: repeat(3, 1fr);
  gap: 15px;
- margin-top: 20px;
+ margin-top: 15px;
  max-width: 600px;
+ width: 100%;
  }
 
  .club-card {
  background: #34495e;
- padding: 15px;
+ padding: 15px 10px;
  border-radius: 10px;
  cursor: pointer;
  text-align: center;
- transition: transform 0.2s, background 0.2s;
  border: 2px solid transparent;
  }
 
- .club-card:hover, .club-card:active {
+ .club-card:active {
  transform: scale(1.05);
  background: #2c3e50;
  border-color: #fff;
  }
 
  .club-icon {
- width: 50px;
- height: 50px;
+ width: 45px;
+ height: 45px;
  border-radius: 50%;
- margin: 0 auto 10px;
+ margin: 0 auto 8px;
  display: flex;
  align-items: center;
  justify-content: center;
  font-weight: bold;
- font-size: 18px;
+ font-size: 16px;
  color: white;
  }
 
  #game-container {
  position: relative;
  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
- border: 5px solid #fff;
+ border: 3px solid #fff;
  border-radius: 4px;
  width: 800px;
- max-width: 100%;
+ max-width: 100vw;
  aspect-ratio: 8/5;
  }
 
@@ -83,8 +124,7 @@
  display: block;
  width: 100%;
  height: 100%;
- background-color: #27ae60; 
- cursor: none;
+ background-color: #27ae60;
  }
 
  #ui-layer {
@@ -98,33 +138,13 @@
  }
 
  .score-board {
- font-size: 24px;
+ font-size: 18px;
  font-weight: bold;
  letter-spacing: 2px;
  background: rgba(0,0,0,0.5);
- padding: 5px 15px;
+ padding: 4px 12px;
  border-radius: 20px;
  display: inline-block;
- }
-
- #commentator-box {
- position: absolute;
- bottom: 80px;
- left: 50%;
- transform: translateX(-50%);
- background: rgba(0, 0, 0, 0.85);
- color: #f1c40f;
- padding: 8px 20px;
- border-radius: 30px;
- font-size: 16px;
- font-weight: bold;
- border: 2px solid #f1c40f;
- min-width: 200px;
- text-align: center;
- opacity: 0;
- transition: opacity 0.3s;
- pointer-events: none;
- z-index: 5;
  }
 
  #message {
@@ -132,106 +152,121 @@
  top: 50%;
  left: 50%;
  transform: translate(-50%, -50%);
- font-size: 32px;
- background: rgba(0, 0, 0, 0.9);
- padding: 20px 40px;
+ font-size: 22px;
+ background: rgba(0, 0, 0, 0.95);
+ padding: 20px;
  border-radius: 10px;
  display: none;
  text-align: center;
- z-index: 6;
+ z-index: 100;
  border: 3px solid white;
  cursor: pointer;
+ width: 80%;
  }
 
- /* Touch Controls */
+ /* --- MOBILE CONTROLS --- */
  #controls {
  position: absolute;
- bottom: 20px;
+ bottom: 15px;
+ left: 0;
  width: 100%;
- height: 120px;
- pointer-events: none;
- display: flex;
+ display: none; /* Controlled by JS based on selected mode */
  justify-content: space-between;
- padding: 0 40px;
- box-sizing: border-box;
- z-index: 8;
+ padding: 0 20px;
+ pointer-events: none;
+ z-index: 50;
  }
 
- .control-zone {
+ .dpad {
+ display: grid;
+ grid-template-columns: repeat(3, 50px);
+ grid-template-rows: repeat(3, 50px);
+ gap: 6px;
  pointer-events: auto;
- position: relative;
  }
 
- /* Joystick Base */
- #joystick-base {
- width: 100px;
- height: 100px;
- background: rgba(255, 255, 255, 0.1);
- border: 2px solid rgba(255, 255, 255, 0.3);
- border-radius: 50%;
- position: relative;
- }
-
- /* Joystick Stick */
- #joystick-stick {
- width: 40px;
- height: 40px;
- background: rgba(255, 255, 255, 0.8);
- border-radius: 50%;
- position: absolute;
- top: 50%;
- left: 50%;
- transform: translate(-50%, -50%);
- box-shadow: 0 2px 5px rgba(0,0,0,0.5);
- }
-
- /* Shoot Button */
- #shoot-btn {
- width: 80px;
- height: 80px;
- background: rgba(231, 76, 60, 0.6);
- border: 2px solid rgba(255, 255, 255, 0.5);
- border-radius: 50%;
+ .btn {
+ background: rgba(255, 255, 255, 0.25);
+ border: 2px solid rgba(255, 255, 255, 0.7);
+ color: white;
+ border-radius: 10px;
  display: flex;
  align-items: center;
  justify-content: center;
  font-weight: bold;
- font-size: 14px;
- color: white;
- user-select: none;
+ font-size: 20px;
+ touch-action: manipulation;
  }
 
- #shoot-btn:active {
- background: rgba(231, 76, 60, 0.9);
+ .btn:active, .btn.active {
+ background: rgba(255, 255, 255, 0.8);
+ color: #000;
+ }
+
+ #btn-up { grid-column: 2; grid-row: 1; }
+ #btn-left { grid-column: 1; grid-row: 2; }
+ #btn-right { grid-column: 3; grid-row: 2; }
+ #btn-down { grid-column: 2; grid-row: 3; }
+
+ .shoot-zone {
+ display: flex;
+ align-items: flex-end;
+ pointer-events: auto;
+ }
+
+ #btn-shoot {
+ width: 80px;
+ height: 80px;
+ border-radius: 50%;
+ background: rgba(231, 76, 60, 0.8);
+ border: 3px solid white;
+ color: white;
+ font-weight: bold;
+ font-size: 14px;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ text-align: center;
+ touch-action: manipulation;
+ }
+
+ #btn-shoot:active {
+ background: rgba(231, 76, 60, 1);
  transform: scale(0.95);
  }
 
- .controls-hint {
- margin-top: 10px;
- font-size: 12px;
- opacity: 0.6;
- text-align: center;
- }
- 
- kbd {
- background: #eee;
- border-radius: 3px;
- border: 1px solid #b4b4b4;
- color: #333;
- display: inline-block;
- font-size: .8em;
- font-weight: 700;
- padding: 2px 4px;
+ @media (max-width: 500px) {
+   .club-grid { grid-template-columns: repeat(2, 1fr); }
+   .dpad { grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(3, 42px); }
+   #btn-shoot { width: 70px; height: 70px; font-size: 12px; }
  }
  </style>
 </head>
 <body>
 
- <!-- Club Selection Screen -->
- <div id="club-screen">
- <h1>PILIH KELAB ANDA</h1>
- <p>Liga Malaysia Super</p>
- <div class="club-grid" id="club-grid"></div>
+ <!-- 1. MODE SELECTION SCREEN -->
+ <div id="mode-screen" class="overlay-screen">
+   <div class="screen-title">PILIH MOD PERMAINAN</div>
+   <div class="menu-grid">
+     <button class="menu-btn" onclick="selectMode('pc')">💻 MOD PC (Papan Kekunci)</button>
+     <button class="menu-btn" onclick="selectMode('mobile')">📱 MOD MOBILE (Sentuhan)</button>
+   </div>
+ </div>
+
+ <!-- 2. MAIN MENU SCREEN -->
+ <div id="menu-screen" class="overlay-screen" style="display: none;">
+   <div class="screen-title">MENU UTAMA</div>
+   <div class="menu-grid">
+     <button class="menu-btn" onclick="selectMenu('exhibition')">1. EXHIBITION</button>
+     <button class="menu-btn" onclick="selectMenu('seasons')">2. SEASONS</button>
+     <button class="menu-btn" onclick="selectMenu('myclub')">3. MY CLUB</button>
+   </div>
+ </div>
+
+ <!-- 3. CLUB SELECTION SCREEN -->
+ <div id="club-screen" class="overlay-screen" style="display: none;">
+   <div class="screen-title">PILIH KELAB ANDA</div>
+   <div class="club-grid" id="club-grid"></div>
  </div>
 
  <div id="game-container">
@@ -245,33 +280,26 @@
  </div>
  </div>
 
- <div id="commentator-box">Selamat datang ke perlawanan!</div>
-
  <div id="message">
- GOAL!<br>
- <span style="font-size: 18px; font-weight: normal;">Tekan SPACE / Sentuh Layar untuk ulang</span>
+ GOL!<br><br>
+ <span style="font-size: 14px; background:#27ae60; padding:6px 12px; border-radius:5px;">SENTUH UNTUK MAIN LAGI</span>
  </div>
 
- <!-- Touch Controls Overlay -->
+ <!-- Direct D-Pad Overlay -->
  <div id="controls">
- <div class="control-zone" id="zone-joystick">
- <div id="joystick-base">
- <div id="joystick-stick"></div>
+ <div class="dpad">
+ <div class="btn" id="btn-up">▲</div>
+ <div class="btn" id="btn-left">◄</div>
+ <div class="btn" id="btn-right">►</div>
+ <div class="btn" id="btn-down">▼</div>
+ </div>
+ <div class="shoot-zone">
+ <div class="btn" id="btn-shoot">TENDANG</div>
  </div>
  </div>
- <div class="control-zone" id="zone-shoot">
- <div id="shoot-btn">TENDANG<br>(SHOOT)</div>
- </div>
- </div>
- </div>
-
- <div class="controls-hint">
- PC: <kbd>WASD</kbd> Gerak | <kbd>Space</kbd> Tendang <br>
- Mobile: Gunakan butang di skrin
  </div>
 
 <script>
- // --- DATA: LIGA MALAYSIA CLUBS ---
  const clubs = [
  { name: "Johor Darul Ta'zim", short: "JDT", color: "#8B0000", accent: "#FFD700" },
  { name: "Kedah Darul Aman", short: "KDA", color: "#000000", accent: "#FFFF00" },
@@ -281,40 +309,44 @@
  { name: "Sabah FC", short: "SBH", color: "#00CED1", accent: "#FFFFFF" }
  ];
 
+ let selectedMode = null; // 'pc' or 'mobile'
  let selectedClub = null;
  let opponentClub = null;
 
- // --- COMMENTATOR PHRASES (Bahasa Melayu) ---
- const phrases = {
- start: ["Perlawanan bermula!", "Siap sedia...", "Wasit meniup wisel!"],
- goalPlayer: ["GOL!!! Jaringan yang hebat!", "Mantap! Pasukan kita unggul!", "Gol yang cantik!"],
- goalCPU: ["Gol untuk lawan!", "Penjaga gol tidak dapat menahan...", "Lawan menjaringkan gol."],
- kick: ["Tendangan kuat!", "Peluang emas!", "Berani mencuba!"]
- };
-
- function getRandomPhrase(category) {
- const list = phrases[category];
- return list[Math.floor(Math.random() * list.length)];
+ // --- 1. MODE SELECTION ---
+ function selectMode(mode) {
+   selectedMode = mode;
+   document.getElementById('mode-screen').style.display = 'none';
+   document.getElementById('menu-screen').style.display = 'flex';
+   
+   // Enable mobile controls UI if mobile mode chosen
+   if (selectedMode === 'mobile') {
+     document.getElementById('controls').style.display = 'flex';
+   } else {
+     document.getElementById('controls').style.display = 'none';
+   }
  }
 
- function showCommentary(text) {
- const box = document.getElementById('commentator-box');
- box.innerText = text;
- box.style.opacity = 1;
- setTimeout(() => {
- box.style.opacity = 0;
- }, 3000);
+ // --- 2. MAIN MENU SELECTION ---
+ function selectMenu(option) {
+   if (option === 'exhibition') {
+     document.getElementById('menu-screen').style.display = 'none';
+     document.getElementById('club-screen').style.display = 'flex';
+   } else if (option === 'seasons') {
+     alert("Mod Seasons akan datang tidak lama lagi!");
+   } else if (option === 'myclub') {
+     alert("Mod My Club akan datang tidak lama lagi!");
+   }
  }
 
- // --- SETUP CLUB SELECTION ---
+ // --- 3. CLUB SELECTION ---
  const clubGrid = document.getElementById('club-grid');
- 
  clubs.forEach((club) => {
  const card = document.createElement('div');
  card.className = 'club-card';
  card.innerHTML = `
  <div class="club-icon" style="background:${club.color}; color:${club.accent}">${club.short}</div>
- <div>${club.name}</div>
+ <div style="font-size: 13px;">${club.name}</div>
  `;
  card.onclick = () => selectClub(club);
  clubGrid.appendChild(card);
@@ -333,14 +365,13 @@
  document.getElementById('teamCPU-name').innerText = opponentClub.short;
  document.getElementById('teamCPU-name').style.color = opponentClub.accent;
 
+ // Hide selection screen and start loop
  document.getElementById('club-screen').style.display = 'none';
- 
+
  resetPositions();
- showCommentary("Selamat datang ke perlawanan!");
  loop();
  }
 
- // --- GAME ENGINE ---
  const canvas = document.getElementById('gameCanvas');
  const ctx = canvas.getContext('2d');
  const scoreP1El = document.getElementById('scoreP1');
@@ -355,234 +386,104 @@
  window.addEventListener('resize', resizeCanvas);
  resizeCanvas();
 
- const FRICTION = 0.95;
- const PLAYER_SPEED = 0.7;
- 
+ const FRICTION = 0.88;
+ const ACCEL = 1.2;
  let scores = { p1: 0, cpu: 0 };
  let isGameOver = false;
 
- const keys = {};
- window.addEventListener('keydown', (e) => keys[e.code] = true);
- window.addEventListener('keyup', (e) => keys[e.code] = false);
+ const inputs = { up: false, down: false, left: false, right: false, shoot: false };
 
- const touchInput = {
- active: false,
- dx: 0,
- dy: 0,
- shooting: false
- };
+ // Keyboard Control Listeners
+ window.addEventListener('keydown', (e) => {
+ if (e.code === 'KeyW' || e.code === 'ArrowUp') inputs.up = true;
+ if (e.code === 'KeyS' || e.code === 'ArrowDown') inputs.down = true;
+ if (e.code === 'KeyA' || e.code === 'ArrowLeft') inputs.left = true;
+ if (e.code === 'KeyD' || e.code === 'ArrowRight') inputs.right = true;
+ if (e.code === 'Space') inputs.shoot = true;
+ });
+ window.addEventListener('keyup', (e) => {
+ if (e.code === 'KeyW' || e.code === 'ArrowUp') inputs.up = false;
+ if (e.code === 'KeyS' || e.code === 'ArrowDown') inputs.down = false;
+ if (e.code === 'KeyA' || e.code === 'ArrowLeft') inputs.left = false;
+ if (e.code === 'KeyD' || e.code === 'ArrowRight') inputs.right = false;
+ if (e.code === 'Space') inputs.shoot = false;
+ });
 
- const joystickBase = document.getElementById('joystick-base');
- const joystickStick = document.getElementById('joystick-stick');
- const zoneJoystick = document.getElementById('zone-joystick');
- const shootBtn = document.getElementById('shoot-btn');
- const zoneShoot = document.getElementById('zone-shoot');
+ // Touch D-Pad Control Binding
+ function bindBtn(id, key) {
+ const el = document.getElementById(id);
+ const start = (e) => { e.preventDefault(); inputs[key] = true; el.classList.add('active'); };
+ const end = (e) => { e.preventDefault(); inputs[key] = false; el.classList.remove('active'); };
 
- let joystickCenter = { x: 0, y: 0 };
- const maxRadius = 30;
- let joystickTouchId = null;
- let shootTouchId = null;
-
- // --- ROBUST MULTI-TOUCH JOYSTICK HANDLERS ---
- function handleJoystickStart(e) {
- e.preventDefault();
- const rect = joystickBase.getBoundingClientRect();
- joystickCenter = {
- x: rect.left + rect.width / 2,
- y: rect.top + rect.height / 2
- };
- 
- const touch = e.changedTouches ? e.changedTouches[0] : e;
- joystickTouchId = touch.identifier !== undefined ? touch.identifier : 'mouse';
- touchInput.active = true;
- updateJoystickPosition(touch);
+ el.addEventListener('touchstart', start, {passive: false});
+ el.addEventListener('touchend', end, {passive: false});
+ el.addEventListener('mousedown', start);
+ el.addEventListener('mouseup', end);
  }
 
- function handleJoystickMove(e) {
- if (!touchInput.active) return;
- e.preventDefault();
- 
- if (e.touches) {
- for (let i = 0; i < e.touches.length; i++) {
- if (e.touches[i].identifier === joystickTouchId) {
- updateJoystickPosition(e.touches[i]);
- break;
- }
- }
- } else {
- updateJoystickPosition(e);
- }
- }
+ bindBtn('btn-up', 'up');
+ bindBtn('btn-down', 'down');
+ bindBtn('btn-left', 'left');
+ bindBtn('btn-right', 'right');
+ bindBtn('btn-shoot', 'shoot');
 
- function handleJoystickEnd(e) {
- e.preventDefault();
- if (e.changedTouches) {
- let ended = false;
- for (let i = 0; i < e.changedTouches.length; i++) {
- if (e.changedTouches[i].identifier === joystickTouchId) {
- ended = true;
- break;
- }
- }
- if (!ended) return;
- }
- 
- touchInput.active = false;
- touchInput.dx = 0;
- touchInput.dy = 0;
- joystickTouchId = null;
- joystickStick.style.transform = `translate(-50%, -50%)`;
- }
-
- function updateJoystickPosition(touch) {
- const dx = touch.clientX - joystickCenter.x;
- const dy = touch.clientY - joystickCenter.y;
- const distance = Math.sqrt(dx*dx + dy*dy);
- 
- const clampedDist = Math.min(distance, maxRadius);
- const angle = Math.atan2(dy, dx);
- 
- const moveX = Math.cos(angle) * clampedDist;
- const moveY = Math.sin(angle) * clampedDist;
-
- joystickStick.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
-
- touchInput.dx = moveX / maxRadius;
- touchInput.dy = moveY / maxRadius;
- }
-
- zoneJoystick.addEventListener('mousedown', handleJoystickStart);
- window.addEventListener('mousemove', handleJoystickMove);
- window.addEventListener('mouseup', handleJoystickEnd);
- 
- zoneJoystick.addEventListener('touchstart', handleJoystickStart, {passive: false});
- window.addEventListener('touchmove', handleJoystickMove, {passive: false});
- window.addEventListener('touchend', handleJoystickEnd, {passive: false});
- window.addEventListener('touchcancel', handleJoystickEnd, {passive: false});
-
- // --- ROBUST SHOOT BUTTON HANDLERS ---
- function startShoot(e) {
- e.preventDefault();
- const touch = e.changedTouches ? e.changedTouches[0] : e;
- shootTouchId = touch.identifier !== undefined ? touch.identifier : 'mouse';
- touchInput.shooting = true;
- shootBtn.style.background = "rgba(231, 76, 60, 0.9)";
- }
-
- function endShoot(e) {
- e.preventDefault();
- if (e.changedTouches) {
- let ended = false;
- for (let i = 0; i < e.changedTouches.length; i++) {
- if (e.changedTouches[i].identifier === shootTouchId) {
- ended = true;
- break;
- }
- }
- if (!ended && shootTouchId !== null) return;
- }
- 
- touchInput.shooting = false;
- shootTouchId = null;
- shootBtn.style.background = "rgba(231, 76, 60, 0.6)";
- }
-
- shootBtn.addEventListener('mousedown', startShoot);
- shootBtn.addEventListener('mouseup', endShoot);
- shootBtn.addEventListener('mouseleave', endShoot);
- 
- shootBtn.addEventListener('touchstart', startShoot, {passive: false});
- shootBtn.addEventListener('touchend', endShoot, {passive: false});
- shootBtn.addEventListener('touchcancel', endShoot, {passive: false});
-
- const ball = {
- x: canvas.width / 2,
- y: canvas.height / 2,
- radius: 10,
- vx: 0,
- vy: 0,
- color: '#fff'
- };
-
- const player = {
- x: 100,
- y: canvas.height / 2,
- radius: 20,
- vx: 0,
- vy: 0,
- speed: PLAYER_SPEED
- };
-
- const cpu = {
- x: canvas.width - 100,
- y: canvas.height / 2,
- radius: 20,
- vx: 0,
- vy: 0,
- speed: 0.4
- };
-
- const goals = {
- width: 10,
- height: 140,
- y: (canvas.height / 2) - 70
- };
+ const ball = { x: 0, y: 0, radius: 10, vx: 0, vy: 0 };
+ const player = { x: 0, y: 0, radius: 18, vx: 0, vy: 0 };
+ const cpu = { x: 0, y: 0, radius: 18, vx: 0, vy: 0 };
+ const goals = { height: 120, y: 0 };
 
  function resetPositions() {
  ball.x = canvas.width / 2;
  ball.y = canvas.height / 2;
- ball.vx = 0;
- ball.vy = 0;
+ ball.vx = 0; ball.vy = 0;
 
  player.x = 100;
  player.y = canvas.height / 2;
- player.vx = 0;
- player.vy = 0;
+ player.vx = 0; player.vy = 0;
 
  cpu.x = canvas.width - 100;
  cpu.y = canvas.height / 2;
- cpu.vx = 0;
- cpu.vy = 0;
+ cpu.vx = 0; cpu.vy = 0;
+
+ goals.y = (canvas.height / 2) - 60;
  }
 
  function updatePhysics(entity) {
  entity.x += entity.vx;
  entity.y += entity.vy;
 
- if (entity.x - entity.radius < 0) {
- entity.x = entity.radius;
- entity.vx *= -0.8;
- }
- if (entity.x + entity.radius > canvas.width) {
- entity.x = canvas.width - entity.radius;
- entity.vx *= -0.8;
- }
- if (entity.y - entity.radius < 0) {
- entity.y = entity.radius;
- entity.vy *= -0.8;
- }
- if (entity.y + entity.radius > canvas.height) {
- entity.y = canvas.height - entity.radius;
- entity.vy *= -0.8;
- }
+ if (entity.x - entity.radius < 0) { entity.x = entity.radius; entity.vx *= -0.5; }
+ if (entity.x + entity.radius > canvas.width) { entity.x = canvas.width - entity.radius; entity.vx *= -0.5; }
+ if (entity.y - entity.radius < 0) { entity.y = entity.radius; entity.vy *= -0.5; }
+ if (entity.y + entity.radius > canvas.height) { entity.y = canvas.height - entity.radius; entity.vy *= -0.5; }
  }
 
  function checkCollision(p, b) {
  const dx = b.x - p.x;
  const dy = b.y - p.y;
- const distance = Math.sqrt(dx * dx + dy * dy);
+ const dist = Math.sqrt(dx * dx + dy * dy);
 
- if (distance < p.radius + b.radius) {
+ if (dist < p.radius + b.radius) {
  const angle = Math.atan2(dy, dx);
- const force = 2.0; 
+ const power = inputs.shoot && p === player ? 8 : 4;
  
- b.vx += Math.cos(angle) * force + (p.vx * 0.5);
- b.vy += Math.sin(angle) * force + (p.vy * 0.5);
+ b.vx = Math.cos(angle) * power + p.vx;
+ b.vy = Math.sin(angle) * power + p.vy;
 
- const overlap = (p.radius + b.radius) - distance;
+ const overlap = (p.radius + b.radius) - dist;
  b.x += Math.cos(angle) * overlap;
  b.y += Math.sin(angle) * overlap;
  }
+ }
+
+ function handleInput() {
+ if (inputs.up) player.vy -= ACCEL;
+ if (inputs.down) player.vy += ACCEL;
+ if (inputs.left) player.vx -= ACCEL;
+ if (inputs.right) player.vx += ACCEL;
+
+ player.vx *= FRICTION;
+ player.vy *= FRICTION;
  }
 
  function updateAI() {
@@ -591,72 +492,33 @@
  const dist = Math.sqrt(dx*dx + dy*dy);
 
  if (dist > 5) {
- cpu.vx += (dx / dist) * cpu.speed;
- cpu.vy += (dy / dist) * cpu.speed;
+ cpu.vx += (dx / dist) * 0.5;
+ cpu.vy += (dy / dist) * 0.5;
  }
-
  cpu.vx *= FRICTION;
  cpu.vy *= FRICTION;
-
- const currentSpeed = Math.sqrt(cpu.vx*cpu.vx + cpu.vy*cpu.vy);
- if (currentSpeed > 4.5) {
- cpu.vx = (cpu.vx / currentSpeed) * 4.5;
- cpu.vy = (cpu.vy / currentSpeed) * 4.5;
- }
  }
 
- function handleInput() {
- if (keys['ArrowUp'] || keys['KeyW']) player.vy -= player.speed;
- if (keys['ArrowDown'] || keys['KeyS']) player.vy += player.speed;
- if (keys['ArrowLeft'] || keys['KeyA']) player.vx -= player.speed;
- if (keys['ArrowRight'] || keys['KeyD']) player.vx += player.speed;
+ msgEl.addEventListener('click', restartGame);
+ msgEl.addEventListener('touchstart', restartGame);
 
- if (touchInput.active) {
- player.vx += touchInput.dx * player.speed;
- player.vy += touchInput.dy * player.speed;
- }
-
- player.vx *= FRICTION;
- player.vy *= FRICTION;
-
- if (keys['Space'] || touchInput.shooting) {
- player.vx *= 1.05; 
- player.vy *= 1.05;
- }
- }
-
- function restartGameCheck() {
- if (isGameOver && (keys['Space'] || touchInput.shooting)) {
- isGameOver = false;
- touchInput.shooting = false;
- msgEl.style.display = 'none';
- resetPositions();
- }
- }
-
- msgEl.addEventListener('click', () => {
+ function restartGame(e) {
+ if (e) e.preventDefault();
  if (isGameOver) {
  isGameOver = false;
- touchInput.shooting = false;
  msgEl.style.display = 'none';
  resetPositions();
  }
- });
+ }
 
  function update() {
- if (isGameOver) {
- restartGameCheck();
- return;
- }
+ if (isGameOver) return;
 
  handleInput();
  updateAI();
 
- ball.vx *= FRICTION;
- ball.vy *= FRICTION;
-
- if (Math.abs(ball.vx) < 0.05) ball.vx = 0;
- if (Math.abs(ball.vy) < 0.05) ball.vy = 0;
+ ball.vx *= 0.96;
+ ball.vy *= 0.96;
 
  updatePhysics(player);
  updatePhysics(cpu);
@@ -665,92 +527,62 @@
  checkCollision(player, ball);
  checkCollision(cpu, ball);
 
- if (ball.x < 10 && ball.y > goals.y && ball.y < goals.y + goals.height) {
+ if (ball.x < 15 && ball.y > goals.y && ball.y < goals.y + goals.height) {
+ scores.cpu++;
+ scoreCPUEl.innerText = scores.cpu;
+ triggerGoal(false);
+ } else if (ball.x > canvas.width - 15 && ball.y > goals.y && ball.y < goals.y + goals.height) {
  scores.p1++;
  scoreP1El.innerText = scores.p1;
  triggerGoal(true);
  }
- else if (ball.x > canvas.width - 10 && ball.y > goals.y && ball.y < goals.y + goals.height) {
- scores.cpu++;
- scoreCPUEl.innerText = scores.cpu;
- triggerGoal(false);
- }
  }
 
- function triggerGoal(isPlayerGoal) {
+ function triggerGoal(isPlayer) {
  isGameOver = true;
- if (isPlayerGoal) {
- msgEl.innerHTML = `GOAL UNTUK ${selectedClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
- showCommentary(getRandomPhrase('goalPlayer'));
- } else {
- msgEl.innerHTML = `GOAL UNTUK ${opponentClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
- showCommentary(getRandomPhrase('goalCPU'));
- }
+ msgEl.innerHTML = `GOL UNTUK ${isPlayer ? selectedClub.short : opponentClub.short}!<br><br><span style="font-size:14px; background:#27ae60; padding:6px 12px; border-radius:5px;">SENTUH UNTUK MAIN LAGI</span>`;
  msgEl.style.display = 'block';
  }
 
- function drawPitch() {
+ function draw() {
  ctx.fillStyle = '#27ae60';
  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
- ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
- ctx.lineWidth = 3;
-
- ctx.beginPath();
- ctx.moveTo(canvas.width / 2, 0);
- ctx.lineTo(canvas.width / 2, canvas.height);
- ctx.stroke();
-
- ctx.beginPath();
- ctx.arc(canvas.width / 2, canvas.height / 2, 70, 0, Math.PI * 2);
- ctx.stroke();
-
- ctx.strokeRect(0, (canvas.height/2) - 100, 100, 200);
- ctx.strokeRect(canvas.width - 100, (canvas.height/2) - 100, 100, 200);
-
- ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
- ctx.fillRect(0, goals.y, 5, goals.height);
- ctx.fillRect(canvas.width - 5, goals.y, 5, goals.height);
- }
-
- function drawEntity(entity) {
- ctx.beginPath();
- ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
- 
- if (entity === player && selectedClub) {
- ctx.fillStyle = selectedClub.color;
- ctx.strokeStyle = selectedClub.accent;
- } else if (entity === cpu && opponentClub) {
- ctx.fillStyle = opponentClub.color;
- ctx.strokeStyle = opponentClub.accent;
- } else {
- ctx.fillStyle = '#fff';
- ctx.strokeStyle = '#ccc';
- }
- 
- ctx.fill();
+ ctx.strokeStyle = '#fff';
  ctx.lineWidth = 2;
- ctx.stroke();
- ctx.closePath();
-
  ctx.beginPath();
- ctx.arc(entity.x - 5, entity.y - 5, entity.radius / 3, 0, Math.PI * 2);
- ctx.fillStyle = 'rgba(255,255,255,0.3)';
- ctx.fill();
- ctx.closePath();
- }
+ ctx.moveTo(canvas.width/2, 0); ctx.lineTo(canvas.width/2, canvas.height);
+ ctx.stroke();
 
- function draw() {
- drawPitch();
- drawEntity(player);
- drawEntity(cpu);
- drawEntity(ball);
+ ctx.strokeRect(0, goals.y, 15, goals.height);
+ ctx.strokeRect(canvas.width - 15, goals.y, 15, goals.height);
+
+ // Draw Player
+ ctx.beginPath();
+ ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+ ctx.fillStyle = selectedClub ? selectedClub.color : '#3498db';
+ ctx.fill();
+ ctx.stroke();
+
+ // Draw CPU
+ ctx.beginPath();
+ ctx.arc(cpu.x, cpu.y, cpu.radius, 0, Math.PI * 2);
+ ctx.fillStyle = opponentClub ? opponentClub.color : '#e74c3c';
+ ctx.fill();
+ ctx.stroke();
+
+ // Draw Ball
+ ctx.beginPath();
+ ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+ ctx.fillStyle = '#fff';
+ ctx.fill();
+ ctx.stroke();
  }
 
  function loop() {
- requestAnimationFrame(loop);
  update();
  draw();
+ requestAnimationFrame(loop);
  }
 </script>
 </body>
