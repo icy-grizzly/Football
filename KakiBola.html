@@ -109,7 +109,7 @@
 
  #commentator-box {
  position: absolute;
- bottom: 80px; /* Moved up slightly to avoid controls */
+ bottom: 80px;
  left: 50%;
  transform: translateX(-50%);
  background: rgba(0, 0, 0, 0.85);
@@ -140,6 +140,7 @@
  text-align: center;
  z-index: 6;
  border: 3px solid white;
+ cursor: pointer;
  }
 
  /* Touch Controls */
@@ -148,7 +149,7 @@
  bottom: 20px;
  width: 100%;
  height: 120px;
- pointer-events: none; /* Let clicks pass through empty areas */
+ pointer-events: none;
  display: flex;
  justify-content: space-between;
  padding: 0 40px;
@@ -230,9 +231,7 @@
  <div id="club-screen">
  <h1>PILIH KELAB ANDA</h1>
  <p>Liga Malaysia Super</p>
- <div class="club-grid" id="club-grid">
- <!-- Clubs injected via JS -->
- </div>
+ <div class="club-grid" id="club-grid"></div>
  </div>
 
  <div id="game-container">
@@ -273,29 +272,29 @@
 
 <script>
  // --- DATA: LIGA MALAYSIA CLUBS ---
- const clubs = \[
+ const clubs = [
  { name: "Johor Darul Ta'zim", short: "JDT", color: "#8B0000", accent: "#FFD700" },
  { name: "Kedah Darul Aman", short: "KDA", color: "#000000", accent: "#FFFF00" },
  { name: "Selangor FC", short: "SLC", color: "#0000CD", accent: "#FFFFFF" },
  { name: "Terengganu FC", short: "TFC", color: "#008000", accent: "#FFFFFF" },
  { name: "Melaka United", short: "MLK", color: "#FF4500", accent: "#000000" },
  { name: "Sabah FC", short: "SBH", color: "#00CED1", accent: "#FFFFFF" }
- \];
+ ];
 
  let selectedClub = null;
  let opponentClub = null;
 
  // --- COMMENTATOR PHRASES (Bahasa Melayu) ---
  const phrases = {
- start: \["Perlawanan bermula!", "Siap sedia...", "Wasit meniup wisel!"\],
- goalPlayer: \["GOL!!! Jaringan yang hebat!", "Mantap! Pasukan kita unggul!", "Gol yang cantik!"\],
- goalCPU: \["Gol untuk lawan!", "Penjaga gol tidak dapat menahan...", "Lawan menjaringkan gol."\],
- kick: \["Tendangan kuat!", "Peluang emas!", "Berani mencuba!"\]
+ start: ["Perlawanan bermula!", "Siap sedia...", "Wasit meniup wisel!"],
+ goalPlayer: ["GOL!!! Jaringan yang hebat!", "Mantap! Pasukan kita unggul!", "Gol yang cantik!"],
+ goalCPU: ["Gol untuk lawan!", "Penjaga gol tidak dapat menahan...", "Lawan menjaringkan gol."],
+ kick: ["Tendangan kuat!", "Peluang emas!", "Berani mencuba!"]
  };
 
  function getRandomPhrase(category) {
- const list = phrases\[category\];
- return list\[Math.floor(Math.random() * list.length)\];
+ const list = phrases[category];
+ return list[Math.floor(Math.random() * list.length)];
  }
 
  function showCommentary(text) {
@@ -323,23 +322,19 @@
 
  function selectClub(clubData) {
  selectedClub = clubData;
- // Pick random opponent different from player
  let oppIndex;
  do {
  oppIndex = Math.floor(Math.random() * clubs.length);
- } while (clubs\[oppIndex\] === selectedClub);
- opponentClub = clubs\[oppIndex\];
+ } while (clubs[oppIndex] === selectedClub);
+ opponentClub = clubs[oppIndex];
 
- // Update UI Text
  document.getElementById('teamP1-name').innerText = selectedClub.short;
  document.getElementById('teamP1-name').style.color = selectedClub.accent;
  document.getElementById('teamCPU-name').innerText = opponentClub.short;
  document.getElementById('teamCPU-name').style.color = opponentClub.accent;
 
- // Hide selection screen
  document.getElementById('club-screen').style.display = 'none';
  
- // Start Game
  resetPositions();
  showCommentary("Selamat datang ke perlawanan!");
  loop();
@@ -352,7 +347,6 @@
  const scoreCPUEl = document.getElementById('scoreCPU');
  const msgEl = document.getElementById('message');
 
- // Canvas sizing
  function resizeCanvas() {
  const container = document.getElementById('game-container');
  canvas.width = container.clientWidth;
@@ -362,19 +356,16 @@
  resizeCanvas();
 
  // Game Constants
- const FRICTION = 0.98;
- const PLAYER_SPEED = 0.6;
+ const FRICTION = 0.95;
+ const PLAYER_SPEED = 0.7;
  
- // Game State
  let scores = { p1: 0, cpu: 0 };
  let isGameOver = false;
 
- // Input Handling
  const keys = {};
- window.addEventListener('keydown', (e) => keys\[e.code\] = true);
- window.addEventListener('keyup', (e) => keys\[e.code\] = false);
+ window.addEventListener('keydown', (e) => keys[e.code] = true);
+ window.addEventListener('keyup', (e) => keys[e.code] = false);
 
- // Touch Input State
  const touchInput = {
  active: false,
  dx: 0,
@@ -382,7 +373,6 @@
  shooting: false
  };
 
- // Joystick Logic
  const joystickBase = document.getElementById('joystick-base');
  const joystickStick = document.getElementById('joystick-stick');
  const zoneJoystick = document.getElementById('zone-joystick');
@@ -390,7 +380,7 @@
  const zoneShoot = document.getElementById('zone-shoot');
 
  let joystickCenter = { x: 0, y: 0 };
- const maxRadius = 30; // Max stick movement radius
+ const maxRadius = 30;
 
  function handleJoystickStart(e) {
  e.preventDefault();
@@ -400,13 +390,13 @@
  y: rect.top + rect.height / 2
  };
  touchInput.active = true;
- updateJoystickPosition(e.touches ? e.touches\[0\] : e);
+ updateJoystickPosition(e.touches ? e.touches[0] : e);
  }
 
  function handleJoystickMove(e) {
  if (!touchInput.active) return;
  e.preventDefault();
- updateJoystickPosition(e.touches ? e.touches\[0\] : e);
+ updateJoystickPosition(e.touches ? e.touches[0] : e);
  }
 
  function handleJoystickEnd(e) {
@@ -422,22 +412,18 @@
  const dy = touch.clientY - joystickCenter.y;
  const distance = Math.sqrt(dx*dx + dy*dy);
  
- // Clamp distance
  const clampedDist = Math.min(distance, maxRadius);
  const angle = Math.atan2(dy, dx);
  
  const moveX = Math.cos(angle) * clampedDist;
  const moveY = Math.sin(angle) * clampedDist;
 
- // Visual update
  joystickStick.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
 
- // Normalize output (-1 to 1)
  touchInput.dx = moveX / maxRadius;
  touchInput.dy = moveY / maxRadius;
  }
 
- // Event Listeners for Joystick
  zoneJoystick.addEventListener('mousedown', handleJoystickStart);
  window.addEventListener('mousemove', handleJoystickMove);
  window.addEventListener('mouseup', handleJoystickEnd);
@@ -446,7 +432,6 @@
  window.addEventListener('touchmove', handleJoystickMove, {passive: false});
  window.addEventListener('touchend', handleJoystickEnd);
 
- // Event Listeners for Shoot Button
  function startShoot(e) {
  e.preventDefault();
  touchInput.shooting = true;
@@ -461,12 +446,9 @@
  shootBtn.addEventListener('mousedown', startShoot);
  shootBtn.addEventListener('mouseup', endShoot);
  shootBtn.addEventListener('mouseleave', endShoot);
- 
  shootBtn.addEventListener('touchstart', startShoot, {passive: false});
  shootBtn.addEventListener('touchend', endShoot);
 
-
- // Entities
  const ball = {
  x: canvas.width / 2,
  y: canvas.height / 2,
@@ -521,7 +503,6 @@
  entity.x += entity.vx;
  entity.y += entity.vy;
 
- // Wall collisions
  if (entity.x - entity.radius < 0) {
  entity.x = entity.radius;
  entity.vx *= -0.8;
@@ -547,7 +528,7 @@
 
  if (distance < p.radius + b.radius) {
  const angle = Math.atan2(dy, dx);
- const force = 1.5; 
+ const force = 2.0; 
  
  b.vx += Math.cos(angle) * force + (p.vx * 0.5);
  b.vy += Math.sin(angle) * force + (p.vy * 0.5);
@@ -568,6 +549,9 @@
  cpu.vy += (dy / dist) * cpu.speed;
  }
 
+ cpu.vx *= FRICTION;
+ cpu.vy *= FRICTION;
+
  const currentSpeed = Math.sqrt(cpu.vx*cpu.vx + cpu.vy*cpu.vy);
  if (currentSpeed > 4.5) {
  cpu.vx = (cpu.vx / currentSpeed) * 4.5;
@@ -576,32 +560,46 @@
  }
 
  function handleInput() {
- // Keyboard Input
- if (keys\['ArrowUp'\] || keys\['KeyW'\]) player.vy -= player.speed;
- if (keys\['ArrowDown'\] || keys\['KeyS'\]) player.vy += player.speed;
- if (keys\['ArrowLeft'\] || keys\['KeyA'\]) player.vx -= player.speed;
- if (keys\['ArrowRight'\] || keys\['KeyD'\]) player.vx += player.speed;
+ if (keys['ArrowUp'] || keys['KeyW']) player.vy -= player.speed;
+ if (keys['ArrowDown'] || keys['KeyS']) player.vy += player.speed;
+ if (keys['ArrowLeft'] || keys['KeyA']) player.vx -= player.speed;
+ if (keys['ArrowRight'] || keys['KeyD']) player.vx += player.speed;
 
- // Touch Input (Joystick)
  if (touchInput.active) {
  player.vx += touchInput.dx * player.speed;
  player.vy += touchInput.dy * player.speed;
  }
 
- // Shooting / Boost
- if (keys\['Space'\] || touchInput.shooting) {
- player.vx *= 1.15; // Boost
- player.vy *= 1.15;
+ player.vx *= FRICTION;
+ player.vy *= FRICTION;
+
+ if (keys['Space'] || touchInput.shooting) {
+ player.vx *= 1.05; 
+ player.vy *= 1.05;
  }
  }
 
- function update() {
- if (isGameOver) {
- if (keys\['Space'\] || touchInput.shooting) {
+ function restartGameCheck() {
+ if (isGameOver && (keys['Space'] || touchInput.shooting)) {
  isGameOver = false;
+ touchInput.shooting = false;
  msgEl.style.display = 'none';
  resetPositions();
  }
+ }
+
+ msgEl.addEventListener('click', () => {
+ if (isGameOver) {
+ isGameOver = false;
+ touchInput.shooting = false;
+ msgEl.style.display = 'none';
+ resetPositions();
+ }
+ });
+
+ function update() {
+ if (isGameOver) {
+ restartGameCheck();
  return;
  }
 
@@ -621,7 +619,6 @@
  checkCollision(player, ball);
  checkCollision(cpu, ball);
 
- // Goal Detection
  if (ball.x < 10 && ball.y > goals.y && ball.y < goals.y + goals.height) {
  scores.p1++;
  scoreP1El.innerText = scores.p1;
@@ -637,10 +634,10 @@
  function triggerGoal(isPlayerGoal) {
  isGameOver = true;
  if (isPlayerGoal) {
- msgEl.innerHTML = `GOAL UNTUK ${selectedClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
+ msgEl.innerHTML = `GOAL UNTUK ${selectedClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Tekan SPACE / Sentuh Layar untuk ulang</span>`;
  showCommentary(getRandomPhrase('goalPlayer'));
  } else {
- msgEl.innerHTML = `GOAL UNTUK ${opponentClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Sentuh layar untuk ulang</span>`;
+ msgEl.innerHTML = `GOAL UNTUK ${opponentClub.short.toUpperCase()}!<br><span style="font-size: 18px; font-weight: normal;">Tekan SPACE / Sentuh Layar untuk ulang</span>`;
  showCommentary(getRandomPhrase('goalCPU'));
  }
  msgEl.style.display = 'block';
@@ -674,7 +671,6 @@
  ctx.beginPath();
  ctx.arc(entity.x, entity.y, entity.radius, 0, Math.PI * 2);
  
- // Use team colors if it's player or CPU
  if (entity === player && selectedClub) {
  ctx.fillStyle = selectedClub.color;
  ctx.strokeStyle = selectedClub.accent;
@@ -691,7 +687,6 @@
  ctx.stroke();
  ctx.closePath();
 
- // Shine effect
  ctx.beginPath();
  ctx.arc(entity.x - 5, entity.y - 5, entity.radius / 3, 0, Math.PI * 2);
  ctx.fillStyle = 'rgba(255,255,255,0.3)';
@@ -711,8 +706,6 @@
  update();
  draw();
  }
-
 </script>
 </body>
 </html>
-
